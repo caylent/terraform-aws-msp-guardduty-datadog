@@ -1,6 +1,5 @@
 terraform {
-  # >= 1.11.0 for write-only attribute support (secret_string_wo in datadog.tf).
-  required_version = ">= 1.11.0"
+  required_version = ">= 1.9.0"
 
   required_providers {
     aws = {

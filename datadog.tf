@@ -18,28 +18,12 @@ locals {
   datadog_api_destination_endpoint = "https://http-intake.logs.${local.datadog_site_domains[var.datadog_site]}/api/v2/logs"
 }
 
-# aws_cloudwatch_event_connection has no argument to reference an existing Secrets
-# Manager secret directly — it only accepts a plaintext value and creates its own
-# AWS-managed secret behind the scenes. So the operator workflow is: Terraform seeds
-# this secret with a placeholder, the operator overwrites it with the real Datadog API
-# key, and a subsequent `terraform apply` reads the updated value and pushes it into
-# the connection. Updating the secret alone does not rotate the live connection.
-resource "aws_secretsmanager_secret" "datadog_api_key" {
-  name        = "datadog-api-key"
-  description = "Datadog API key for the GuardDuty-to-Datadog EventBridge connection. Replace the placeholder value after creation, then re-run terraform apply to push it into the connection."
-}
-
-resource "aws_secretsmanager_secret_version" "datadog_api_key" {
-  secret_id                = aws_secretsmanager_secret.datadog_api_key.id
-  secret_string_wo         = "REPLACE_ME"
-  secret_string_wo_version = 1
-}
-
-data "aws_secretsmanager_secret_version" "datadog_api_key" {
-  secret_id  = aws_secretsmanager_secret.datadog_api_key.id
-  depends_on = [aws_secretsmanager_secret_version.datadog_api_key]
-}
-
+# aws_cloudwatch_event_connection has no write-only or ephemeral variant for
+# auth_parameters, and no argument to reference an existing Secrets Manager secret —
+# it only accepts a plaintext value, which AWS then stores in its own managed secret.
+# The plaintext is therefore unavoidably persisted in Terraform state; supply
+# var.datadog_api_key via TF_VAR_datadog_api_key or an untracked .tfvars file and
+# protect state per this project's state-security controls.
 resource "aws_cloudwatch_event_connection" "datadog" {
   name               = "datadog"
   description        = "Datadog API Connection"
@@ -47,11 +31,8 @@ resource "aws_cloudwatch_event_connection" "datadog" {
 
   auth_parameters {
     api_key {
-      key = "DD-API-KEY"
-      # Wrapped in sensitive() as defense in depth: the Secrets Manager data source's
-      # secret_string attribute is not documented as sensitive, unlike a variable
-      # declared with sensitive = true.
-      value = sensitive(data.aws_secretsmanager_secret_version.datadog_api_key.secret_string)
+      key   = "DD-API-KEY"
+      value = var.datadog_api_key
     }
   }
 }

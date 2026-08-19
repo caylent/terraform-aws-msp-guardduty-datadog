@@ -3,6 +3,12 @@ variable "aws_region" {
   type        = string
 }
 
+variable "datadog_api_key" {
+  description = "Datadog API key the EventBridge connection uses to authenticate to Datadog. The AWS provider requires this as a plaintext argument (aws_cloudwatch_event_connection has no write-only or ephemeral variant), so it will be persisted in Terraform state; supply it via TF_VAR_datadog_api_key from a CI secret store or an untracked .tfvars file, never a literal in checked-in code, and protect state per this project's state-security controls."
+  type        = string
+  sensitive   = true
+}
+
 variable "datadog_site" {
   description = "Datadog site to send GuardDuty findings to. Determines the Logs intake endpoint via local.datadog_site_domains in datadog.tf."
   type        = string
