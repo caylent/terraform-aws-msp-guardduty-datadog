@@ -44,6 +44,6 @@ resource "aws_cloudwatch_event_target" "datadog" {
     input_paths = {
       detail = "$.detail"
     }
-    input_template = "{\"message\": <detail>}"
+    input_template = "{\"message\": <detail>,\"source\":\"guardduty\"}"
   }
 }
