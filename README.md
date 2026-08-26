@@ -99,26 +99,28 @@ export TF_VAR_datadog_api_key="<your-datadog-api-key>"
 Protect the state file for this module (remote state with encryption and
 restricted access) accordingly.
 
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
-|------|---------|
-| terraform | >= 1.9.0 |
-| aws | ~> 6.0 |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|----------|
-| aws_region | AWS region to deploy the EventBridge connection, API destination, and rule into. Must be a region where GuardDuty findings are generated. | `string` | n/a | yes |
-| datadog_api_key | Datadog API key the EventBridge connection uses to authenticate to Datadog. | `string` | n/a | yes |
-| datadog_site | Datadog site to send GuardDuty findings to. One of `US1`, `US3`, `US5`, `EU`, `AP1`, `AP2`, `UK1`, `US1-FED`, `US2-FED`. | `string` | `"US1"` | no |
-| invocation_rate_limit_per_second | Maximum number of invocations per second EventBridge sends to the Datadog API destination. | `number` | `300` | no |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | AWS region to deploy the EventBridge connection, API destination, and rule into. Must be a region where GuardDuty findings are generated, since the rule matches on the default event bus. | `string` | n/a | yes |
+| <a name="input_datadog_api_key"></a> [datadog\_api\_key](#input\_datadog\_api\_key) | Datadog API key the EventBridge connection uses to authenticate to Datadog. The AWS provider requires this as a plaintext argument (aws\_cloudwatch\_event\_connection has no write-only or ephemeral variant), so it will be persisted in Terraform state; supply it via TF\_VAR\_datadog\_api\_key from a CI secret store or an untracked .tfvars file, never a literal in checked-in code, and protect state per this project's state-security controls. | `string` | n/a | yes |
+| <a name="input_datadog_site"></a> [datadog\_site](#input\_datadog\_site) | Datadog site to send GuardDuty findings to. Determines the Logs intake endpoint via local.datadog\_site\_domains in datadog.tf. | `string` | `"US1"` | no |
+| <a name="input_invocation_rate_limit_per_second"></a> [invocation\_rate\_limit\_per\_second](#input\_invocation\_rate\_limit\_per\_second) | Maximum number of invocations per second EventBridge sends to the Datadog API destination. | `number` | `300` | no |
 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
-| datadog_connection_arn | ARN of the EventBridge connection to Datadog. |
-| datadog_api_destination_arn | ARN of the EventBridge API destination for Datadog. |
-| guardduty_to_datadog_rule_arn | ARN of the EventBridge rule that routes GuardDuty findings to Datadog. |
+| ---- | ----------- |
+| <a name="output_datadog_api_destination_arn"></a> [datadog\_api\_destination\_arn](#output\_datadog\_api\_destination\_arn) | ARN of the EventBridge API destination for Datadog. |
+| <a name="output_datadog_connection_arn"></a> [datadog\_connection\_arn](#output\_datadog\_connection\_arn) | ARN of the EventBridge connection to Datadog. |
+| <a name="output_guardduty_to_datadog_rule_arn"></a> [guardduty\_to\_datadog\_rule\_arn](#output\_guardduty\_to\_datadog\_rule\_arn) | ARN of the EventBridge rule that routes GuardDuty findings to Datadog. |
+<!-- END_TF_DOCS -->
