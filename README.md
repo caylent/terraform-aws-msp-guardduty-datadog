@@ -15,7 +15,7 @@ Datadog API key.
 
 ```hcl
 module "guardduty_to_datadog" {
-  source  = "caylent/guardduty-datadog/aws"
+  source  = "caylent/msp-guardduty-datadog/aws"
   version = "~> 1.0"
 
   aws_region      = "us-east-1"
@@ -38,7 +38,7 @@ repeating it as a separate literal:
 data "aws_region" "current" {}
 
 module "guardduty_to_datadog" {
-  source  = "caylent/guardduty-datadog/aws"
+  source  = "caylent/msp-guardduty-datadog/aws"
   version = "~> 1.0"
 
   aws_region      = data.aws_region.current.region
@@ -70,7 +70,7 @@ locals {
 }
 
 module "guardduty_to_datadog" {
-  source   = "caylent/guardduty-datadog/aws"
+  source   = "caylent/msp-guardduty-datadog/aws"
   version  = "~> 1.0"
   for_each = toset(local.guardduty_regions)
 
