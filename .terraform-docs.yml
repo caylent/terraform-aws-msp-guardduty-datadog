@@ -1,0 +1,15 @@
+formatter: "markdown table"
+
+output:
+  file: "README.md"
+  mode: inject
+
+sections:
+  show:
+    - requirements
+    - inputs
+    - outputs
+
+sort:
+  enabled: true
+  by: name
