@@ -25,7 +25,11 @@ The `datadog_api_key` variable is `sensitive = true`, but `aws_cloudwatch_event_
 
 ## Releasing
 
-No build/publish step — the Terraform Registry re-indexes this repo's tags automatically. To release: merge to `main`, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+To release: merge to `main`, then `git tag vX.Y.Z && git push origin vX.Y.Z`. No build step — tags are the release artifact.
+
+The registry requires a one-time manual publish (sign in to registry.terraform.io with GitHub, "Publish" this repo — needs at least one tag pushed first) before it starts tracking this repo at all. After that initial link exists, every subsequent tag push is picked up automatically via a webhook the publish step installs, usually within a minute. If a new tag doesn't show up on the registry after a few minutes, check Settings → Webhooks for the registry's webhook — it's known to occasionally stop firing and needs to be configured to trigger on tag/branch create events, not just plain pushes.
+
+Only push real semver tags (`v1.2.3`). Don't introduce moving/floating tags like `latest`, `stable`, or a bare major version (`v1`) to mimic Docker/npm/GitHub-Actions conventions — the registry's versioning model is built entirely on immutable per-release tags, and consumers never reference a tag name directly. A caller pinning `version = "~> 1.0"` against the registry source has Terraform's own client resolve that constraint against the real tag list; the registry also computes its own "latest" for the docs site automatically. A moving tag would be invisible to consumers and would undermine the reproducibility the registry format exists to provide.
 
 ## CI (`.github/workflows/pr-checks.yml`)
 
@@ -35,6 +39,7 @@ Three jobs on every PR against `main`: `fmt`, `validate`, and a `terraform-docs`
 
 - `tflint` — catches things `terraform validate` doesn't (unused variables, deprecated syntax, provider-specific lint rules). Low cost to add; consider it once this module has more surface area or after the first real external contribution.
 - `tfsec` or `checkov` — static security scanning. Worth adding given this module handles a Datadog API key and IAM roles/policies, but expect initial false positives that need triage/suppression — budget setup time rather than treating it as a drop-in addition.
+- A `workflow_dispatch` release job (take a version input, create and push the tag from the Actions UI) — mainly useful once someone without local git access needs to cut a release, or release cadence picks up enough that manual `git tag && git push` becomes friction. Not needed for a single low-cadence module.
 
 ## Docs
 
