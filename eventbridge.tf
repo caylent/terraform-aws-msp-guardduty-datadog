@@ -9,7 +9,7 @@ resource "aws_cloudwatch_event_rule" "guardduty_to_datadog" {
 }
 
 resource "aws_iam_role" "eventbridge_invoke_datadog" {
-  name = "eventbridge-invoke-datadog-api-destination"
+  name = "eventbridge-invoke-datadog-api-destination-${var.aws_region}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
