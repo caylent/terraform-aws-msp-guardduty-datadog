@@ -19,13 +19,20 @@ jobs:
   validate:
     name: terraform validate
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory:
+          - "."
+          - "modules/msp-guardduty-datadog-single-region"
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "latest"
-      - run: terraform init -backend=false
-      - run: terraform validate
+      - working-directory: ${{ matrix.directory }}
+        run: terraform init -backend=false
+      - working-directory: ${{ matrix.directory }}
+        run: terraform validate
 
   docs:
     name: terraform-docs drift check

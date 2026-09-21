@@ -1,16 +1,11 @@
-variable "regions" {
-  description = "AWS regions to deploy GuardDuty-to-Datadog forwarding into. GuardDuty findings and the default event bus are both regional, so at least one region must be listed; only include regions where GuardDuty is actually enabled for the account."
-  type        = list(string)
+variable "aws_region" {
+  description = "AWS region this instance of the submodule deploys the EventBridge connection, API destination, rule, and DLQ into. Must be a region where GuardDuty findings are generated, since the rule matches on the default event bus."
+  type        = string
+}
 
-  validation {
-    condition     = length(var.regions) > 0
-    error_message = "regions must contain at least one AWS region."
-  }
-
-  validation {
-    condition     = alltrue([for r in var.regions : contains(keys(local.region_aliases), r)])
-    error_message = "regions must only contain AWS regions known to this module (see locals.tf's region_aliases map)."
-  }
+variable "eventbridge_role_arn" {
+  description = "ARN of the IAM role EventBridge assumes to invoke the Datadog API destination. Created once by the calling root module and shared across all region instances, since IAM roles are account-global."
+  type        = string
 }
 
 variable "datadog_api_key" {
@@ -20,7 +15,7 @@ variable "datadog_api_key" {
 }
 
 variable "datadog_site" {
-  description = "Datadog site to send GuardDuty findings to. Determines the Logs intake endpoint via local.datadog_site_domains in modules/msp-guardduty-datadog-single-region/datadog.tf."
+  description = "Datadog site to send GuardDuty findings to. Determines the Logs intake endpoint via local.datadog_site_domains in datadog.tf."
   type        = string
   default     = "US1"
 
@@ -31,7 +26,7 @@ variable "datadog_site" {
 }
 
 variable "invocation_rate_limit_per_second" {
-  description = "Maximum number of invocations per second EventBridge sends to the Datadog API destination, per region."
+  description = "Maximum number of invocations per second EventBridge sends to the Datadog API destination."
   type        = number
   default     = 300
 }

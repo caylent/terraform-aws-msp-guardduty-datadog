@@ -1,0 +1,39 @@
+# HCL provider aliases and module block labels can't contain hyphens, so every
+# real AWS region has a matching underscored key here used consistently for its
+# provider alias, module label, and output map entry.
+locals {
+  region_aliases = {
+    "us-east-1"      = "us_east_1"
+    "us-east-2"      = "us_east_2"
+    "us-west-1"      = "us_west_1"
+    "us-west-2"      = "us_west_2"
+    "af-south-1"     = "af_south_1"
+    "ap-east-1"      = "ap_east_1"
+    "ap-south-1"     = "ap_south_1"
+    "ap-south-2"     = "ap_south_2"
+    "ap-southeast-1" = "ap_southeast_1"
+    "ap-southeast-2" = "ap_southeast_2"
+    "ap-southeast-3" = "ap_southeast_3"
+    "ap-southeast-4" = "ap_southeast_4"
+    "ap-southeast-5" = "ap_southeast_5"
+    "ap-southeast-7" = "ap_southeast_7"
+    "ap-northeast-1" = "ap_northeast_1"
+    "ap-northeast-2" = "ap_northeast_2"
+    "ap-northeast-3" = "ap_northeast_3"
+    "ca-central-1"   = "ca_central_1"
+    "ca-west-1"      = "ca_west_1"
+    "eu-central-1"   = "eu_central_1"
+    "eu-central-2"   = "eu_central_2"
+    "eu-west-1"      = "eu_west_1"
+    "eu-west-2"      = "eu_west_2"
+    "eu-west-3"      = "eu_west_3"
+    "eu-north-1"     = "eu_north_1"
+    "eu-south-1"     = "eu_south_1"
+    "eu-south-2"     = "eu_south_2"
+    "il-central-1"   = "il_central_1"
+    "me-central-1"   = "me_central_1"
+    "me-south-1"     = "me_south_1"
+    "mx-central-1"   = "mx_central_1"
+    "sa-east-1"      = "sa_east_1"
+  }
+}

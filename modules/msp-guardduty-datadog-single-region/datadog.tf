@@ -25,7 +25,7 @@ locals {
 # var.datadog_api_key via TF_VAR_datadog_api_key or an untracked .tfvars file and
 # protect state per this project's state-security controls.
 resource "aws_cloudwatch_event_connection" "datadog" {
-  name               = "datadog"
+  name               = "datadog-${var.aws_region}"
   description        = "Datadog API Connection"
   authorization_type = "API_KEY"
 
@@ -38,7 +38,7 @@ resource "aws_cloudwatch_event_connection" "datadog" {
 }
 
 resource "aws_cloudwatch_event_api_destination" "datadog" {
-  name                             = "datadog-api-destination"
+  name                             = "datadog-api-destination-${var.aws_region}"
   description                      = "Datadog API Destination"
   invocation_endpoint              = local.datadog_api_destination_endpoint
   http_method                      = "POST"
