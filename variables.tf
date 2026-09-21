@@ -25,3 +25,21 @@ variable "invocation_rate_limit_per_second" {
   type        = number
   default     = 300
 }
+
+variable "eventbridge_role_arn" {
+  description = "ARN of an existing IAM role EventBridge should assume to invoke the Datadog API destination. When null (the default), this module creates its own role scoped to this region. Pass in the eventbridge_role_arn output from a prior call to this module (in another region) to share one role across multiple calls instead of creating a new one each time."
+  type        = string
+  default     = null
+}
+
+variable "max_event_age_seconds" {
+  description = "Maximum age, in seconds, EventBridge keeps retrying a failed delivery to the Datadog API destination before sending it to the dead-letter queue."
+  type        = number
+  default     = 3600
+}
+
+variable "max_retry_attempts" {
+  description = "Maximum number of retry attempts EventBridge makes on a failed delivery to the Datadog API destination before sending it to the dead-letter queue."
+  type        = number
+  default     = 10
+}
