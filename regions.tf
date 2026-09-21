@@ -106,6 +106,24 @@ module "ap_east_1" {
   max_retry_attempts               = var.max_retry_attempts
 }
 
+module "ap_east_2" {
+  source = "./modules/msp-guardduty-datadog-single-region"
+
+  providers = {
+    aws = aws.ap_east_2
+  }
+
+  count = contains(var.regions, "ap-east-2") ? 1 : 0
+
+  aws_region                       = "ap-east-2"
+  eventbridge_role_arn             = aws_iam_role.eventbridge_invoke_datadog.arn
+  datadog_api_key                  = var.datadog_api_key
+  datadog_site                     = var.datadog_site
+  invocation_rate_limit_per_second = var.invocation_rate_limit_per_second
+  max_event_age_seconds            = var.max_event_age_seconds
+  max_retry_attempts               = var.max_retry_attempts
+}
+
 module "ap_south_1" {
   source = "./modules/msp-guardduty-datadog-single-region"
 
@@ -224,6 +242,24 @@ module "ap_southeast_5" {
   count = contains(var.regions, "ap-southeast-5") ? 1 : 0
 
   aws_region                       = "ap-southeast-5"
+  eventbridge_role_arn             = aws_iam_role.eventbridge_invoke_datadog.arn
+  datadog_api_key                  = var.datadog_api_key
+  datadog_site                     = var.datadog_site
+  invocation_rate_limit_per_second = var.invocation_rate_limit_per_second
+  max_event_age_seconds            = var.max_event_age_seconds
+  max_retry_attempts               = var.max_retry_attempts
+}
+
+module "ap_southeast_6" {
+  source = "./modules/msp-guardduty-datadog-single-region"
+
+  providers = {
+    aws = aws.ap_southeast_6
+  }
+
+  count = contains(var.regions, "ap-southeast-6") ? 1 : 0
+
+  aws_region                       = "ap-southeast-6"
   eventbridge_role_arn             = aws_iam_role.eventbridge_invoke_datadog.arn
   datadog_api_key                  = var.datadog_api_key
   datadog_site                     = var.datadog_site

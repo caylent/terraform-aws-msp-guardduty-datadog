@@ -29,6 +29,11 @@ provider "aws" {
 }
 
 provider "aws" {
+  alias  = "ap_east_2"
+  region = "ap-east-2"
+}
+
+provider "aws" {
   alias  = "ap_south_1"
   region = "ap-south-1"
 }
@@ -61,6 +66,11 @@ provider "aws" {
 provider "aws" {
   alias  = "ap_southeast_5"
   region = "ap-southeast-5"
+}
+
+provider "aws" {
+  alias  = "ap_southeast_6"
+  region = "ap-southeast-6"
 }
 
 provider "aws" {
