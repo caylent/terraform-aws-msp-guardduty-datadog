@@ -30,6 +30,3 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-
-# Local scratch config for testing a branch deploys before merge/tag
-/test-deploy/
