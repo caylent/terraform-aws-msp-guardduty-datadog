@@ -55,27 +55,18 @@ provider's region — see below for deploying across multiple regions.
 GuardDuty findings and the default event bus are both regional, so this
 module must be deployed once per region you want covered — there is no
 single-deployment way to catch findings account-wide. This module declares
-its own `provider "aws"` block scoped to `var.aws_region`. Terraform forbids
-`count`/`for_each`/`depends_on` on any module that declares its own provider
-block, so a dynamic loop over a region list isn't possible here — instead,
-declare one explicit provider alias and one explicit module call per region,
-each pointed at that alias:
+its own `provider "aws"` block scoped to `var.aws_region`, so you don't need
+to pre-declare AWS provider aliases in your root configuration; calling the
+module once per region is enough, and each call gets its own provider
+instance. That self-contained provider is also why `count`/`for_each` can't
+be used here — Terraform forbids both on any module that declares its own
+provider block — so a dynamic loop over a region list isn't possible;
+instead, declare one explicit, separately-named module call per region:
 
 ```hcl
-provider "aws" {
-  alias  = "use1"
-  region = "us-east-1"
-}
-
-provider "aws" {
-  alias  = "usw2"
-  region = "us-west-2"
-}
-
 module "guardduty_to_datadog_use1" {
-  source    = "caylent/msp-guardduty-datadog/aws"
-  version   = "~> 1.0"
-  providers = { aws = aws.use1 }
+  source  = "caylent/msp-guardduty-datadog/aws"
+  version = "~> 1.0"
 
   aws_region      = "us-east-1"
   datadog_api_key = var.datadog_api_key
@@ -83,9 +74,8 @@ module "guardduty_to_datadog_use1" {
 }
 
 module "guardduty_to_datadog_usw2" {
-  source    = "caylent/msp-guardduty-datadog/aws"
-  version   = "~> 1.0"
-  providers = { aws = aws.usw2 }
+  source  = "caylent/msp-guardduty-datadog/aws"
+  version = "~> 1.0"
 
   aws_region           = "us-west-2"
   eventbridge_role_arn = module.guardduty_to_datadog_use1.eventbridge_role_arn
