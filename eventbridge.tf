@@ -9,15 +9,11 @@ resource "aws_cloudwatch_event_rule" "guardduty_to_datadog" {
 }
 
 data "aws_caller_identity" "current" {
-  count = var.eventbridge_role_arn == null ? 1 : 0
+  count = var.eventbridge_role_arn == null && !var.limit_role_to_region ? 1 : 0
 }
 
-# Only created when the caller doesn't pass eventbridge_role_arn in — a caller
-# managing multiple regions can wire one call's eventbridge_role_arn output
-# into every other call's eventbridge_role_arn input instead of creating a
-# role per region. The policy uses a wildcarded resource pattern rather than
-# this call's own destination ARN specifically so a role created here still
-# works if it's later shared into another region's call.
+# Only created when the caller doesn't pass eventbridge_role_arn in, since a
+# role can instead be shared in from another region's call.
 resource "aws_iam_role" "eventbridge_invoke_datadog" {
   count = var.eventbridge_role_arn == null ? 1 : 0
   name  = "eventbridge-invoke-datadog-api-destination-${var.aws_region}"
@@ -40,9 +36,13 @@ resource "aws_iam_role_policy" "invoke_api_destination" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = "events:InvokeApiDestination"
-      Resource = "arn:aws:events:*:${data.aws_caller_identity.current[0].account_id}:api-destination/datadog-api-destination-*"
+      Effect = "Allow"
+      Action = "events:InvokeApiDestination"
+      Resource = var.limit_role_to_region ? (
+        aws_cloudwatch_event_api_destination.datadog.arn
+        ) : (
+        "arn:aws:events:*:${data.aws_caller_identity.current[0].account_id}:api-destination/datadog-api-destination-*"
+      )
     }]
   })
 }

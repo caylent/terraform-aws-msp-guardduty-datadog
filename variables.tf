@@ -32,6 +32,12 @@ variable "eventbridge_role_arn" {
   default     = null
 }
 
+variable "limit_role_to_region" {
+  description = "When true (the default), a role created by this call is scoped to only this call's own Datadog API destination. Set to false if you intend to share this call's eventbridge_role_arn output into other regions' calls, so the role's policy is broadened to cover any datadog-api-destination-* ARN in the account instead of just this one. Has no effect when eventbridge_role_arn is set, since this call isn't creating a role."
+  type        = bool
+  default     = true
+}
+
 variable "max_event_age_seconds" {
   description = "Maximum age, in seconds, EventBridge keeps retrying a failed delivery to the Datadog API destination before sending it to the dead-letter queue."
   type        = number

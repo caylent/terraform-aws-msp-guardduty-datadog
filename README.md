@@ -77,12 +77,16 @@ module "guardduty_to_datadog_usw2" {
   source  = "caylent/msp-guardduty-datadog/aws"
   version = "~> 1.0"
 
-  aws_region           = "us-west-2"
-  eventbridge_role_arn = module.guardduty_to_datadog_use1.eventbridge_role_arn
-  datadog_api_key      = var.datadog_api_key
-  datadog_site         = "US1"
+  aws_region      = "us-west-2"
+  datadog_api_key = var.datadog_api_key
+  datadog_site    = "US1"
 }
 ```
+
+Each call above creates its own IAM role, scoped to only that call's own
+region, so no cross-region wiring is needed to get started. See
+["Sharing one IAM role across regions"](#sharing-one-iam-role-across-regions)
+below if you'd rather have one shared role instead of one per region.
 
 Only include regions where GuardDuty is actually enabled for the account —
 deploying this module in a region without GuardDuty active will succeed but
@@ -91,15 +95,41 @@ never forward any findings.
 ### Sharing one IAM role across regions
 
 Each call to this module creates its own IAM role for EventBridge to invoke
-the Datadog API destination, scoped to that call's region — so calling it
+the Datadog API destination, scoped to that call's region, so calling it
 for N regions creates N nearly-identical roles by default. To avoid that,
 pass the first call's `eventbridge_role_arn` output into every subsequent
-call's `eventbridge_role_arn` input (as in the `usw2` call above): that
-call skips creating its own role and reuses the one already created. Every
-role this module creates has a wildcarded permission (covering any
-`datadog-api-destination-*` ARN in the account/partition, not just its own
-region's), specifically so a role created in one region already works when
-shared into another.
+call's `eventbridge_role_arn` input; that call skips creating its own role
+and reuses the one already created.
+
+By default, a role's policy only authorizes invoking its own call's
+destination (`limit_role_to_region = true`), so if you intend to share a
+call's role into other regions, set `limit_role_to_region = false` on that
+call (the one actually creating the role) *before* wiring it elsewhere.
+That widens the policy to a wildcarded resource pattern covering any
+`datadog-api-destination-*` ARN in the account, so the role keeps working
+once shared into other regions' calls:
+
+```hcl
+module "guardduty_to_datadog_use1" {
+  source  = "caylent/msp-guardduty-datadog/aws"
+  version = "~> 1.0"
+
+  aws_region           = "us-east-1"
+  limit_role_to_region = false
+  datadog_api_key      = var.datadog_api_key
+  datadog_site         = "US1"
+}
+
+module "guardduty_to_datadog_usw2" {
+  source  = "caylent/msp-guardduty-datadog/aws"
+  version = "~> 1.0"
+
+  aws_region           = "us-west-2"
+  eventbridge_role_arn = module.guardduty_to_datadog_use1.eventbridge_role_arn
+  datadog_api_key      = var.datadog_api_key
+  datadog_site         = "US1"
+}
+```
 
 ## Dead-letter queue
 
@@ -160,6 +190,7 @@ restricted access) accordingly.
 | <a name="input_datadog_site"></a> [datadog\_site](#input\_datadog\_site) | Datadog site to send GuardDuty findings to. Determines the Logs intake endpoint via local.datadog\_site\_domains in datadog.tf. | `string` | `"US1"` | no |
 | <a name="input_eventbridge_role_arn"></a> [eventbridge\_role\_arn](#input\_eventbridge\_role\_arn) | ARN of an existing IAM role EventBridge should assume to invoke the Datadog API destination. When null (the default), this module creates its own role scoped to this region. Pass in the eventbridge\_role\_arn output from a prior call to this module (in another region) to share one role across multiple calls instead of creating a new one each time. | `string` | `null` | no |
 | <a name="input_invocation_rate_limit_per_second"></a> [invocation\_rate\_limit\_per\_second](#input\_invocation\_rate\_limit\_per\_second) | Maximum number of invocations per second EventBridge sends to the Datadog API destination. | `number` | `300` | no |
+| <a name="input_limit_role_to_region"></a> [limit\_role\_to\_region](#input\_limit\_role\_to\_region) | When true (the default), a role created by this call is scoped to only this call's own Datadog API destination. Set to false if you intend to share this call's eventbridge\_role\_arn output into other regions' calls, so the role's policy is broadened to cover any datadog-api-destination-* ARN in the account instead of just this one. Has no effect when eventbridge\_role\_arn is set, since this call isn't creating a role. | `bool` | `true` | no |
 | <a name="input_max_event_age_seconds"></a> [max\_event\_age\_seconds](#input\_max\_event\_age\_seconds) | Maximum age, in seconds, EventBridge keeps retrying a failed delivery to the Datadog API destination before sending it to the dead-letter queue. | `number` | `3600` | no |
 | <a name="input_max_retry_attempts"></a> [max\_retry\_attempts](#input\_max\_retry\_attempts) | Maximum number of retry attempts EventBridge makes on a failed delivery to the Datadog API destination before sending it to the dead-letter queue. | `number` | `10` | no |
 
