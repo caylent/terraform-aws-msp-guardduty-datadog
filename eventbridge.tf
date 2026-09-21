@@ -12,6 +12,10 @@ data "aws_caller_identity" "current" {
   count = var.eventbridge_role_arn == null && !var.limit_role_to_region ? 1 : 0
 }
 
+data "aws_partition" "current" {
+  count = var.eventbridge_role_arn == null && !var.limit_role_to_region ? 1 : 0
+}
+
 # Only created when the caller doesn't pass eventbridge_role_arn in, since a
 # role can instead be shared in from another region's call.
 resource "aws_iam_role" "eventbridge_invoke_datadog" {
@@ -41,7 +45,7 @@ resource "aws_iam_role_policy" "invoke_api_destination" {
       Resource = var.limit_role_to_region ? (
         aws_cloudwatch_event_api_destination.datadog.arn
         ) : (
-        "arn:aws:events:*:${data.aws_caller_identity.current[0].account_id}:api-destination/datadog-api-destination-*"
+        "arn:${data.aws_partition.current[0].partition}:events:*:${data.aws_caller_identity.current[0].account_id}:api-destination/datadog-api-destination/*"
       )
     }]
   })
@@ -99,5 +103,39 @@ resource "aws_cloudwatch_event_target" "datadog" {
 
   dead_letter_config {
     arn = aws_sqs_queue.guardduty_to_datadog_dlq.arn
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "guardduty_to_datadog_dlq" {
+  count               = var.create_dlq_cloudwatch_alarm ? 1 : 0
+  alarm_name          = "guardduty-to-datadog-dlq-${var.aws_region}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  namespace           = "AWS/SQS"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 0
+
+  dimensions = {
+    QueueName = aws_sqs_queue.guardduty_to_datadog_dlq.name
+  }
+}
+
+# Alerts from inside Datadog itself, since that's where findings forwarded
+# by this module are actually reviewed, in addition to the CloudWatch alarm
+# above.
+resource "datadog_monitor" "dlq_depth" {
+  count = var.datadog_app_key != null ? 1 : 0
+  name  = "GuardDuty to Datadog: undelivered findings in ${var.aws_region}"
+  type  = "query alert"
+  query = "avg(last_5m):avg:aws.sqs.approximate_number_of_messages_visible{queuename:${aws_sqs_queue.guardduty_to_datadog_dlq.name}} > 0"
+
+  message = join("\n", concat([
+    "GuardDuty findings in ${var.aws_region} are stuck undelivered to Datadog after exhausting retries. Check the guardduty-to-datadog-dlq-${var.aws_region} SQS queue.",
+  ], formatlist("%s", var.dlq_monitor_notify)))
+
+  monitor_thresholds {
+    critical = 0
   }
 }

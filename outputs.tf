@@ -22,3 +22,13 @@ output "dlq_arn" {
   description = "ARN of the SQS dead-letter queue that receives GuardDuty findings EventBridge could not deliver to Datadog after exhausting retries. Alarm on this queue's ApproximateNumberOfMessagesVisible metric to detect a broken delivery pipeline."
   value       = aws_sqs_queue.guardduty_to_datadog_dlq.arn
 }
+
+output "dlq_monitor_id" {
+  description = "ID of the Datadog monitor alerting on the dead-letter queue's depth. Null unless datadog_app_key is set."
+  value       = try(datadog_monitor.dlq_depth[0].id, null)
+}
+
+output "dlq_cloudwatch_alarm_arn" {
+  description = "ARN of the CloudWatch alarm on the dead-letter queue's depth. Null when create_dlq_cloudwatch_alarm is false."
+  value       = try(aws_cloudwatch_metric_alarm.guardduty_to_datadog_dlq[0].arn, null)
+}

@@ -33,7 +33,7 @@ variable "eventbridge_role_arn" {
 }
 
 variable "limit_role_to_region" {
-  description = "When true (the default), a role created by this call is scoped to only this call's own Datadog API destination. Set to false if you intend to share this call's eventbridge_role_arn output into other regions' calls, so the role's policy is broadened to cover any datadog-api-destination-* ARN in the account instead of just this one. Has no effect when eventbridge_role_arn is set, since this call isn't creating a role."
+  description = "When true (the default), a role created by this call is scoped to only this call's own Datadog API destination. Set to false if you intend to share this call's eventbridge_role_arn output into other regions' calls, so the role's policy is broadened to cover any datadog-api-destination/* ARN in the account instead of just this one. Has no effect when eventbridge_role_arn is set, since this call isn't creating a role."
   type        = bool
   default     = true
 }
@@ -48,4 +48,23 @@ variable "max_retry_attempts" {
   description = "Maximum number of retry attempts EventBridge makes on a failed delivery to the Datadog API destination before sending it to the dead-letter queue."
   type        = number
   default     = 10
+}
+
+variable "datadog_app_key" {
+  description = "Datadog application key used to create a monitor on the dead-letter queue's depth via the Datadog API. Distinct from datadog_api_key: that key only authorizes the AWS-side EventBridge connection to send logs into Datadog's intake, while this one authenticates Terraform's own calls to the Datadog management API and should be scoped to only monitor management. Setting this is what creates the monitor; requires the Datadog AWS integration to already be enabled on this account, which this module can't verify or enable."
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "dlq_monitor_notify" {
+  description = "Datadog notification targets (e.g. [\"@slack-oncall\", \"@pagerduty-guardduty\", \"@user@example.com\"]) appended to the dead-letter queue monitor's message. Only used when datadog_app_key is set."
+  type        = list(string)
+  default     = []
+}
+
+variable "create_dlq_cloudwatch_alarm" {
+  description = "Whether to create a CloudWatch alarm on the dead-letter queue's ApproximateNumberOfMessagesVisible metric. Defaults to true. Set to false if you're relying on the Datadog monitor (datadog_app_key) instead and don't want a second, separate alarm in CloudWatch that nothing is watching."
+  type        = bool
+  default     = true
 }
