@@ -16,6 +16,16 @@ locals {
   }
 
   datadog_api_destination_endpoint = "https://http-intake.logs.${local.datadog_site_domains[var.datadog_site]}/api/v2/logs"
+
+  # The management API host doesn't always match the site domain above: UK1
+  # is an app-only alias with no separate API host of its own and is served
+  # from the US1 API (confirmed against the datadog provider's own api_url
+  # documentation, which only lists a distinct host per underlying region,
+  # not per app-facing site name).
+  datadog_api_hosts = merge(
+    { for site, domain in local.datadog_site_domains : site => "https://api.${domain}" },
+    { "UK1" = "https://api.datadoghq.com" }
+  )
 }
 
 # aws_cloudwatch_event_connection has no write-only or ephemeral variant for

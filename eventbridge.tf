@@ -114,7 +114,7 @@ resource "aws_cloudwatch_metric_alarm" "guardduty_to_datadog_dlq" {
   metric_name         = "ApproximateNumberOfMessagesVisible"
   namespace           = "AWS/SQS"
   period              = 300
-  statistic           = "Sum"
+  statistic           = "Maximum"
   threshold           = 0
 
   dimensions = {
@@ -132,8 +132,8 @@ resource "datadog_monitor" "dlq_depth" {
   query = "avg(last_5m):avg:aws.sqs.approximate_number_of_messages_visible{queuename:${aws_sqs_queue.guardduty_to_datadog_dlq.name}} > 0"
 
   message = join("\n", concat([
-    "GuardDuty findings in ${var.aws_region} are stuck undelivered to Datadog after exhausting retries. Check the guardduty-to-datadog-dlq-${var.aws_region} SQS queue.",
-  ], formatlist("%s", var.dlq_monitor_notify)))
+    "GuardDuty findings in ${var.aws_region} are stuck undelivered to Datadog after exhausting retries. Check the ${aws_sqs_queue.guardduty_to_datadog_dlq.name} SQS queue.",
+  ], var.dlq_monitor_notify))
 
   monitor_thresholds {
     critical = 0

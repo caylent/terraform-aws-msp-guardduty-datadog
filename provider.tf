@@ -12,4 +12,5 @@ provider "datadog" {
   validate = false
   api_key  = var.datadog_api_key
   app_key  = var.datadog_app_key
+  api_url  = local.datadog_api_hosts[var.datadog_site]
 }
