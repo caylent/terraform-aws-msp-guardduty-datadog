@@ -129,7 +129,7 @@ resource "datadog_monitor" "dlq_depth" {
   count = var.datadog_app_key != null ? 1 : 0
   name  = "GuardDuty to Datadog: undelivered findings in ${var.aws_region}"
   type  = "query alert"
-  query = "avg(last_5m):avg:aws.sqs.approximate_number_of_messages_visible{queuename:${aws_sqs_queue.guardduty_to_datadog_dlq.name}} > 0"
+  query = "max(last_5m):max:aws.sqs.approximate_number_of_messages_visible{queuename:${aws_sqs_queue.guardduty_to_datadog_dlq.name}} > 0"
 
   message = join("\n", concat([
     "GuardDuty findings in ${var.aws_region} are stuck undelivered to Datadog after exhausting retries. Check the ${aws_sqs_queue.guardduty_to_datadog_dlq.name} SQS queue.",
